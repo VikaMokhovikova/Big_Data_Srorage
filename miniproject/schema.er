@@ -1,0 +1,79 @@
+[dim_genres]
+    *id {label:"INTEGER"}
+    name {label:"VARCHAR"}
+[dim_keywords]
+    *id {label:"INTEGER"}
+    name {label:"VARCHAR"}
+[dim_persons]
+    *person_id {label:"INTEGER"}
+    gender {label:"INTEGER"}
+    name {label:"VARCHAR"}
+[dim_production_companies]
+    *id {label:"INTEGER"}
+    name {label:"VARCHAR"}
+[dim_production_countries]
+    *id {label:"VARCHAR"}
+    name {label:"VARCHAR"}
+[dim_spoken_languages]
+    *id {label:"VARCHAR"}
+    name {label:"VARCHAR"}
+[fact_movies]
+    budget {label:"BIGINT"}
+    homepage {label:"TEXT"}
+    movie_id {label:"BIGINT"}
+    original_language {label:"TEXT"}
+    original_title {label:"TEXT"}
+    overview {label:"TEXT"}
+    popularity {label:"FLOAT"}
+    release_date {label:"TEXT"}
+    revenue {label:"BIGINT"}
+    runtime {label:"FLOAT"}
+    status {label:"TEXT"}
+    tagline {label:"TEXT"}
+    title {label:"TEXT"}
+    vote_average {label:"FLOAT"}
+    vote_count {label:"BIGINT"}
+[link_cast]
+    *id {label:"INTEGER"}
+    cast_id {label:"INTEGER"}
+    character {label:"VARCHAR"}
+    credit_id {label:"VARCHAR"}
+    movie_id {label:"INTEGER"}
+    order {label:"INTEGER"}
+    person_id {label:"INTEGER"}
+[link_crew]
+    *id {label:"INTEGER"}
+    credit_id {label:"VARCHAR"}
+    department {label:"VARCHAR"}
+    job {label:"VARCHAR"}
+    movie_id {label:"INTEGER"}
+    person_id {label:"INTEGER"}
+[link_genres]
+    *dim_id {label:"INTEGER"}
+    *fact_id {label:"INTEGER"}
+[link_keywords]
+    *dim_id {label:"INTEGER"}
+    *fact_id {label:"INTEGER"}
+[link_production_companies]
+    *dim_id {label:"INTEGER"}
+    *fact_id {label:"INTEGER"}
+[link_production_countries]
+    *dim_id {label:"VARCHAR"}
+    *fact_id {label:"INTEGER"}
+[link_spoken_languages]
+    *dim_id {label:"VARCHAR"}
+    *fact_id {label:"INTEGER"}
+dim_persons."person_id" ?--* link_cast."person_id"
+fact_movies."movie_id" ?--* link_cast."movie_id"
+dim_persons."person_id" ?--* link_crew."person_id"
+fact_movies."movie_id" ?--* link_crew."movie_id"
+fact_movies."movie_id" 1--* link_genres."fact_id"
+dim_genres."id" 1--* link_genres."dim_id"
+fact_movies."movie_id" 1--* link_keywords."fact_id"
+dim_keywords."id" 1--* link_keywords."dim_id"
+dim_production_companies."id" 1--* link_production_companies."dim_id"
+fact_movies."movie_id" 1--* link_production_companies."fact_id"
+dim_production_countries."id" 1--* link_production_countries."dim_id"
+fact_movies."movie_id" 1--* link_production_countries."fact_id"
+dim_spoken_languages."id" 1--* link_spoken_languages."dim_id"
+fact_movies."movie_id" 1--* link_spoken_languages."fact_id"
