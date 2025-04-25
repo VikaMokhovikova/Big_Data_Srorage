@@ -1,0 +1,40 @@
+Main Entity:
+Movie
+
+Key Attributes:
+id — unique movie identifier
+title — movie title
+genres — list of genres
+release_date — release date
+runtime — duration of the movie (in minutes)
+budget — production budget (in dollars)
+revenue — box office revenue (in dollars)
+vote_average — average user rating
+vote_count — number of votes
+popularity — popularity score
+original_language — original language of the movie
+production_companies — production companies
+production_countries — production countries
+overview — brief description of the plot
+tagline — movie tagline
+status — production status (e.g., "Released", "Post Production")
+homepage — official movie website
+poster_path — path to the movie poster
+
+Potential Measures
+Measures:
+budget — can be aggregated (e.g., total budget by genre or year)
+revenue — total or average revenue
+runtime — average movie duration
+vote_average — average rating
+vote_count — total number of votes
+popularity — average or maximum popularity score
+
+Potential Dimensions:
+genres
+original_language
+production_companies
+production_countries
+status — movie release status
+homepage — presence/absence of an official website (could be used as a binary feature)
+

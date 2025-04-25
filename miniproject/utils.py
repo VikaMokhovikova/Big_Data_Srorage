@@ -15,6 +15,61 @@ from sqlalchemy import (
     create_engine,
     insert,
 )
+def create_fact_movies_table(
+    df: pd.DataFrame, db_path: str = "sqlite:///./tmdb_star.db"
+) -> None:
+    """
+        Creates and populates the fact_movies table in the database.
+        Parameters:
+            df (pd.DataFrame): DataFrame containing movie information.
+            db_path (str): Path to the SQLite database.
+        """
+    engine = create_engine(db_path)
+    metadata = MetaData()
+
+    Table(
+        "fact_movies",
+        metadata,
+        Column("movie_id", Integer, primary_key=True),
+        Column("title", String),
+        Column("budget", BigInteger),
+        Column("revenue", BigInteger),
+        Column("popularity", Float),
+        Column("release_date", Date),
+        Column("runtime", Integer),
+        Column("vote_average", Float),
+        Column("vote_count", Integer),
+        Column("homepage", String),
+        Column("original_language", String),
+        Column("original_title", String),
+        Column("overview", String),
+        Column("status", String),
+        Column("tagline", String),
+    )
+
+    metadata.create_all(engine)
+
+    df = df.rename(columns={"id": "movie_id"})[
+        [
+            "movie_id",
+            "title",
+            "budget",
+            "revenue",
+            "popularity",
+            "release_date",
+            "runtime",
+            "vote_average",
+            "vote_count",
+            "homepage",
+            "original_language",
+            "original_title",
+            "overview",
+            "status",
+            "tagline",
+        ]
+    ]
+
+    df.to_sql("fact_movies", con=engine, if_exists="replace", index=False)
 
 
 def create_dimentions_movies(
@@ -85,55 +140,6 @@ def create_dimentions_movies(
         conn.execute(insert(link_table), df_link.to_dict(orient="records"))
 
 
-def create_fact_movies_table(
-    df: pd.DataFrame, db_path: str = "sqlite:///./tmdb_star.db"
-) -> None:
-    engine = create_engine(db_path)
-    metadata = MetaData()
-
-    Table(
-        "fact_movies",
-        metadata,
-        Column("movie_id", Integer, primary_key=True),
-        Column("title", String),
-        Column("budget", BigInteger),
-        Column("revenue", BigInteger),
-        Column("popularity", Float),
-        Column("release_date", Date),
-        Column("runtime", Integer),
-        Column("vote_average", Float),
-        Column("vote_count", Integer),
-        Column("homepage", String),
-        Column("original_language", String),
-        Column("original_title", String),
-        Column("overview", String),
-        Column("status", String),
-        Column("tagline", String),
-    )
-
-    metadata.create_all(engine)
-
-    df = df.rename(columns={"id": "movie_id"})[
-        [
-            "movie_id",
-            "title",
-            "budget",
-            "revenue",
-            "popularity",
-            "release_date",
-            "runtime",
-            "vote_average",
-            "vote_count",
-            "homepage",
-            "original_language",
-            "original_title",
-            "overview",
-            "status",
-            "tagline",
-        ]
-    ]
-
-    df.to_sql("fact_movies", con=engine, if_exists="replace", index=False)
 
 
 def parse_json_column(dataframe, column_name):
@@ -148,6 +154,13 @@ def parse_json_column(dataframe, column_name):
 
 
 def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
+    """
+        Creates dimension and linking tables for cast and crew from credits data.
+
+        Parameters:
+            credits_df (pd.DataFrame): DataFrame containing credits information (cast and crew).
+            db_path (str): Path to the SQLite database.
+        """
     engine = create_engine(db_path)
     metadata = MetaData()
     metadata.reflect(bind=engine)
@@ -165,8 +178,6 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
                     "movie_id": movie_id,
                     "person_id": cast_member.get("id"),
                     "character": cast_member.get("character"),
-                    "cast_id": cast_member.get("cast_id"),
-                    "credit_id": cast_member.get("credit_id"),
                     "order": cast_member.get("order"),
                 }
             )
@@ -177,14 +188,12 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
                     "person_id": crew_member.get("id"),
                     "department": crew_member.get("department"),
                     "job": crew_member.get("job"),
-                    "credit_id": crew_member.get("credit_id"),
                 }
             )
 
     cast_df = pd.DataFrame(cast_table)
     crew_df = pd.DataFrame(crew_table)
 
-    # Собираем таблицу персон
     cast_persons = pd.DataFrame(
         row for row in cast_table if row["person_id"] is not None
     )[["person_id"]].drop_duplicates()
@@ -193,7 +202,6 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
     )[["person_id"]].drop_duplicates()
     all_ids = pd.concat([cast_persons, crew_persons]).drop_duplicates()
 
-    # Добавляем имена и гендер (при наличии)
     persons_data = {}
     for row in credits_df.itertuples():
         for entry in row.cast_parsed + row.crew_parsed:
@@ -209,7 +217,6 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
         subset=["person_id"]
     )
 
-    # Определим таблицы
     dim_persons = Table(
         "dim_persons",
         metadata,
@@ -224,9 +231,9 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
         Column("id", Integer, primary_key=True, autoincrement=True),
         Column("movie_id", Integer, ForeignKey("fact_movies.movie_id")),
         Column("person_id", Integer, ForeignKey("dim_persons.person_id")),
-        Column("cast_id", Integer),
+        # Column("cast_id", Integer),
         Column("character", String),
-        Column("credit_id", String),
+        # Column("credit_id", String),
         Column("order", Integer),
     )
 
@@ -238,7 +245,7 @@ def create_dimensions_credits(credits_df, db_path="sqlite:///tmdb_star.db"):
         Column("person_id", Integer, ForeignKey("dim_persons.person_id")),
         Column("department", String),
         Column("job", String),
-        Column("credit_id", String),
+        # Column("credit_id", String),
     )
 
     metadata.create_all(engine)
